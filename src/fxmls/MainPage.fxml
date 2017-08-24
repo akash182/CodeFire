@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?import java.net.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.canvas.*?>
+<BorderPane 
+    xmlns="http://javafx.com/javafx/8.0.65" 
+    xmlns:fx="http://javafx.com/fxml/1" 
+    fx:controller="apps.MainPageCtrl">
+   <center>
+      <HBox prefHeight="400" prefWidth="400"
+      fx:id="myFlow" spacing="10"
+      onDragDropped="#nodeDropped" 
+      onDragOver="#nodeDragOver" ></HBox>
+   </center>
+  <left>
+    <VBox spacing="10" prefWidth="200">
+        <Button text="Login page" fx:id="btnDrag"   onDragDetected="#startDrag" />
+        <Button text="Empty Check" fx:id="btnDragJs"   onDragDetected="#startDragJs" />
+        <Button text="Check in DB" fx:id="dbCheck"   onDragDetected="#startDragDbcheck" />
+         
+    </VBox>
+  </left>
+  <bottom>
+<GridPane alignment="center" hgap="10" vgap="10"
+    >
+    <padding><Insets top="25" right="25" bottom="25" left="25"/></padding>
+
+        <Button text="Save"   GridPane.columnIndex="0" GridPane.rowIndex="0"   
+        />
+        <Button text="Create"   GridPane.columnIndex="2" GridPane.rowIndex="0"   
+        onAction="#handleCreateButtonAction"/>
+    </GridPane>
+  </bottom>
+  
+  <stylesheets>
+    <URL value="@/css/app.css" />
+  </stylesheets>
+</BorderPane>
