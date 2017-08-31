@@ -12,10 +12,10 @@
     xmlns:fx="http://javafx.com/fxml/1" 
     fx:controller="apps.MainPageCtrl">
    <center>
-      <HBox prefHeight="400" prefWidth="400"
-      fx:id="myFlow" spacing="10"
+      <Pane prefHeight="400" prefWidth="400"
+      fx:id="myFlow"
       onDragDropped="#nodeDropped" 
-      onDragOver="#nodeDragOver" ></HBox>
+      onDragOver="#nodeDragOver"></Pane>
    </center>
   <left>
     <VBox spacing="10" prefWidth="200">
