@@ -3,19 +3,33 @@
  */
 package apps;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.scene.shape.Line;
 
 public class DraggableNode extends Pane {
-
+    private int id;
     // node position
     private double x = 0;
     private double y = 0;
@@ -26,8 +40,7 @@ public class DraggableNode extends Pane {
     private boolean dragging = false;
     private boolean moveToFront = true;
     private boolean isSource;
-
-    private Map<Line, Boolean> connectedLines = new HashMap<>();
+    private Map<CustomLine, Boolean> connectedLines = new HashMap<>();
 
     public DraggableNode() {
         init();
@@ -40,11 +53,11 @@ public class DraggableNode extends Pane {
         init();
     }
 
-    public Map<Line, Boolean> getConnectedLines() {
+    public Map<CustomLine, Boolean> getConnectedLines() {
         return connectedLines;
     }
 
-    public void setConnectedLines(Map<Line, Boolean> connectedLines) {
+    public void setConnectedLines(Map<CustomLine, Boolean> connectedLines) {
         this.connectedLines = connectedLines;
     }
 
@@ -67,7 +80,7 @@ public class DraggableNode extends Pane {
             }
         });
 
-        // Event Listener for MouseDragged
+        // Event Listener for MouseDraggedLogin page
         onMouseDraggedProperty().set(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
@@ -83,7 +96,9 @@ public class DraggableNode extends Pane {
 
                 double scaledX = x;
                 double scaledY = y;
-
+                if (scaledX < 20 || scaledX > 400 || scaledY < 40 || scaledY > 700) {
+                    return;
+                }
                 setLayoutX(scaledX);
                 setLayoutY(scaledY);
                 updateLine(scaledX, scaledY, tHeight, tWidth);
@@ -100,6 +115,117 @@ public class DraggableNode extends Pane {
         onMouseClickedProperty().set(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
+                BorderPane bp = (BorderPane) getParent().getParent();
+                VBox rightPanel = (VBox) bp.getRight();
+
+                rightPanel.getChildren().clear();
+                Label l = new Label();
+                if ("fJs".equals(getId())) {
+
+                    ObservableList<String> options = FXCollections.observableArrayList("username", "pasword", "both");
+                    ObservableList<String> options1 = FXCollections.observableArrayList("not empty", "empty");
+                    final ComboBox<String> comboBox = new ComboBox<>(options);
+                    final ComboBox<String> comparator = new ComboBox<>(options1);
+                    Properties props = new Properties();
+                    FileInputStream fs = null;
+                    String frts = null;
+                    String scnd = null;
+                    try {
+                        fs = new FileInputStream("./src/properties/fJs.properties");
+                        props.load(fs);
+                        if (props.getProperty("firstBox") != null) {
+                            frts = props.getProperty("firstBox");
+                            scnd = props.getProperty("secondBox");
+                        } else {
+                        }
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    } finally {
+                        try {
+                            fs.close();
+                        } catch (IOException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }
+                    l.setText(" " + getId() + "\n check if \n");
+                    Label l1 = new Label("is/are");
+                    Button btnSave = new Button("Save Properties");
+                    btnSave.addEventHandler(ActionEvent.ANY, new EventHandler<ActionEvent>() {
+
+                        @Override
+                        public void handle(ActionEvent event) {
+                            props.setProperty("firstBox", comboBox.getSelectionModel().getSelectedItem());
+                            props.setProperty("secondBox", comparator.getSelectionModel().getSelectedItem());
+                            try {
+                                props.store(new FileOutputStream("./src/properties/fjs.properties"), "Values for parameters");
+                            } catch (FileNotFoundException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                        }
+
+                    });
+                    if (frts != null) {
+
+                        comboBox.getSelectionModel().select(frts);
+                    }
+                    if (scnd != null) {
+
+                        comparator.getSelectionModel().select(scnd);
+                    }
+                    rightPanel.getChildren().addAll(l, comboBox, l1, comparator, btnSave);
+
+                } else if ("fAlert".equals(getId())) {
+                    l.setText("Alert Box \n Your Message : ");
+                    final TextField text = new TextField();
+                    Properties props = new Properties();
+                    FileInputStream fs = null;
+                    String message = null;
+                    try {
+                        fs = new FileInputStream("./src/properties/fAlert.properties");
+                        props.load(fs);
+                        if (props.getProperty("message") != null) {
+                            message = props.getProperty("message");
+                            text.setText(message);
+                        } else {
+                        }
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    } finally {
+                        try {
+                            fs.close();
+                        } catch (IOException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }
+                    Button btnSave = new Button("Save Properties");
+                    btnSave.addEventHandler(ActionEvent.ANY, new EventHandler<ActionEvent>() {
+
+                        @Override
+                        public void handle(ActionEvent event) {
+                            props.setProperty("message", text.getText());
+                            try {
+                                props.store(new FileOutputStream("./src/properties/fAlert.properties"), "Values for parameters");
+                            } catch (FileNotFoundException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                        }
+
+                    });
+
+                    rightPanel.getChildren().addAll(l, text, btnSave);
+                }
 
                 dragging = false;
             }
@@ -115,9 +241,9 @@ public class DraggableNode extends Pane {
     }
 
     private void updateLine(double x, double y, double height, double width) {
-        Iterator<Entry<Line, Boolean>> it = connectedLines.entrySet().iterator();
+        Iterator<Entry<CustomLine, Boolean>> it = connectedLines.entrySet().iterator();
         while (it.hasNext()) {
-            Entry<Line, Boolean> curr = it.next();
+            Entry<CustomLine, Boolean> curr = it.next();
             if (curr.getValue()) {
                 changeStart(x, y, height, width, curr.getKey());
             } else {
@@ -152,7 +278,7 @@ public class DraggableNode extends Pane {
         getChildren().remove(n);
     }
 
-    public void setLine(Line line) {
+    public void setLine(CustomLine line) {
         this.connectedLines.put(line, this.isSource());
     }
 
@@ -173,5 +299,13 @@ public class DraggableNode extends Pane {
         l.setEndX(x + (width / 2));
         l.setEndY(y);
 
+    }
+
+    public int getDgId() {
+        return id;
+    }
+
+    public void setDgId(int id) {
+        this.id = id;
     }
 }
