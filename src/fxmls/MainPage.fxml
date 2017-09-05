@@ -18,10 +18,13 @@
       onDragOver="#nodeDragOver"></Pane>
    </center>
   <left>
-    <VBox spacing="10" prefWidth="200">
-        <Button text="Login page" fx:id="btnDrag"   onDragDetected="#startDrag" />
-        <Button text="Empty Check" fx:id="btnDragJs"   onDragDetected="#startDragJs" />
+    <VBox spacing="10" prefWidth="400">
+    <padding><Insets top="25" right="25" bottom="25" left="25"/></padding>
+        <Button text="Html page" fx:id="btnDrag"   onDragDetected="#startDrag" />
+        <Button text="Check" fx:id="btnDragJs"   onDragDetected="#startDragJs" />
         <Button text="Check in DB" fx:id="dbCheck"   onDragDetected="#startDragDbcheck" />
+        <Button text="Alert" fx:id="alertBox" onDragDetected="#startAlertDrag" />
+        <Button text="dbConnection" fx:id="db" onDragDetected="#startDBDrag" />
          
     </VBox>
   </left>
@@ -36,7 +39,11 @@
         onAction="#handleCreateButtonAction"/>
     </GridPane>
   </bottom>
-  
+  <right >
+  <VBox id="rightPanel" spacing="10" prefWidth="200">
+  <padding><Insets top="25" right="25" bottom="25" left="25"/></padding>
+  </VBox>
+  </right>
   <stylesheets>
     <URL value="@/css/app.css" />
   </stylesheets>
