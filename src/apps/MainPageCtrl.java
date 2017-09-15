@@ -417,8 +417,8 @@ public class MainPageCtrl {
         byte[] datah = headerPart.getBytes();
         byte[] datab = bodypart.getBytes();
         byte[] datae = endPart.getBytes();
-        Path htmlPath = Paths.get("D:\\WorkSpace\\CodeFire0.0.5\\htmls\\index.html");
-        Path jspath = Paths.get("D:\\WorkSpace\\CodeFire0.0.5\\htmls\\app.js");
+        Path htmlPath = Paths.get(".\\plibrary\\index.html");
+        Path jspath = Paths.get(".\\plibrary\\app.js");
         try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(htmlPath))) {
             out.write(datah, 0, datah.length);
             out.write(datab, 0, datab.length);
