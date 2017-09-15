@@ -3,7 +3,6 @@
  */
 package apps;
 
-import java.net.URL;
 import java.util.logging.Logger;
 
 import javafx.application.Application;
@@ -21,8 +20,9 @@ public class Main extends Application {
     public void start(Stage stage) {
 
         try {
-            URL url = getClass().getResource("/fxmls/MainPage.fxml");
-            BorderPane root = FXMLLoader.load(url);
+            Context cont = Context.getInstance();
+            // URL url = getClass().getResource("/fxmls/MainPage.fxml");
+            BorderPane root = cont.getMainPage(); // FXMLLoader.load(url);
             VBox menuBar = FXMLLoader.load(getClass().getResource("/fxmls/Menubar.fxml"));
             root.setTop(menuBar);
             Scene scene = new Scene(root);

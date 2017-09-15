@@ -17,9 +17,21 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Attr;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
@@ -40,16 +52,27 @@ import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.Line;
 
 public class MainPageCtrl {
+    private static final String ERROR = "Error :";
+    private static final String FILE_CREATED_SUCCESFULLY = "File Created Succesfully";
+
     Logger log;
+    int countOfElements = 1;
+    boolean ifCond = true;
     @FXML
     private Pane myFlow;
 
+    @FXML
+    private VBox menuBox;
     @FXML
     private Button btnDrag;
 
@@ -68,7 +91,9 @@ public class MainPageCtrl {
     @FXML
     private Button alertBox;
 
-    private boolean isBackend;
+    @FXML
+    private Button db;
+
     private boolean startLine = true;
     double a = 0;
     double b = 0;
@@ -76,6 +101,11 @@ public class MainPageCtrl {
     double d = 0;
     DraggableNode source = null;
     DraggableNode target = null;
+    private static final String FEXTENSION = ".properties";
+
+    static final double SPACING = 30;
+    int i = 1;
+    int dgNodeCount = 1;
 
     public boolean isStartLine() {
         return startLine;
@@ -85,19 +115,13 @@ public class MainPageCtrl {
         this.startLine = startLine;
     }
 
-    final double spacing = 30;
-    // Timeline timeline;
-    int i = 1;
-    int dgNodeCount = 1;
-
     @FXML
     void nodeDragOver(DragEvent de) {
         /* data is dragged over the target */
 
-        Dragboard db = de.getDragboard();
-        if (db.hasString()) {
+        Dragboard dragboard = de.getDragboard();
+        if (dragboard.hasString()) {
             de.acceptTransferModes(TransferMode.COPY);
-            System.out.println("onDragOver");
         }
 
         de.consume();
@@ -106,80 +130,19 @@ public class MainPageCtrl {
 
     @FXML
     void nodeDropped(DragEvent de) {
-        Dragboard db = de.getDragboard();
-        if (db.hasString()) {
-            if (db.getString().equals("Html page")) {
-                GridPane grid = createGridPane("htmlPage");
+        Dragboard dragString = de.getDragboard();
+        if (dragString.hasString()) {
+            if ("Html page".equals(dragString.getString())) {
+                createHtmlPage();
 
-                Label userNameLabel = new Label("User Name : ");
-                TextField userName = new TextField();
-
-                Label passwordLabel = new Label("Password : ");
-                PasswordField passwordField1 = new PasswordField();
-
-                grid.add(userNameLabel, 1, 0);
-                grid.add(userName, 2, 0);
-                grid.add(passwordLabel, 1, 1);
-                grid.add(passwordField1, 2, 1);
-                DraggableNode node = createDragableNode(grid);
-                node.setId("fHtml");
-                Properties prop = new Properties();
-                myFlow.getChildren().add(node);
-
-            } else if (db.getString().equals("Check")) {
-                GridPane grid = createGridPane("Check");
-                grid.setPrefHeight(240);
-                grid.setPrefWidth(120);
-
-                Label emptyCheck = new Label("Check ");
-                emptyCheck.setStyle("-fx-rotate : -45");
-                grid.add(emptyCheck, 1, 1);
-
-                DraggableNode node = createDragableNode(grid);
-
-                node.setId("fJs");
-                File fjs = new File("./src/properties/fJs.properties");
-                try {
-                    boolean created = fjs.createNewFile();
-                    if (created) {
-                        System.out.println("File Created Succesfully");
-                    }
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                node.setStyle("-fx-rotate : 45;");
-                myFlow.getChildren().add(node);
-            } else if (db.getString().equals("Alert")) {
-                GridPane grid = createGridPane("AlertBox");
-                Label emptyCheck = new Label("Alert Box");
-                grid.add(emptyCheck, 1, 1);
-                DraggableNode node = createDragableNode(grid);
-
-                node.setId("fAlert");
-                File fjs = new File("./src/properties/fAlert.properties");
-                try {
-                    boolean created = fjs.createNewFile();
-                    if (created) {
-                        System.out.println("File Created Succesfully");
-                    }
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                myFlow.getChildren().add(node);
-            } else if (db.getString().equals("Check in DB")) {
-                GridPane grid = createGridPane("dbCheck");
-                Label emptyCheck = new Label("User DB Check");
-                grid.add(emptyCheck, 1, 1);
-                DraggableNode node = createDragableNode(grid);
-
-                node.setId("fJava");
-                isBackend = true;
-                myFlow.getChildren().add(node);
+            } else if ("Check".equals(dragString.getString())) {
+                createjsCheck();
+            } else if ("Alert".equals(dragString.getString())) {
+                createjsAlert();
+            } else if ("dbConnection".equals(dragString.getString())) {
+                createDbCon();
             }
 
-            System.out.println("onDragDropped");
             de.setDropCompleted(true);
         } else {
             de.setDropCompleted(false);
@@ -189,26 +152,107 @@ public class MainPageCtrl {
 
     }
 
+    private void createDbCon() {
+        GridPane grid = createGridPane("dbConnection");
+        Label emptyCheck = new Label("User DB Check");
+        final PhongMaterial redMaterial = new PhongMaterial();
+        redMaterial.setDiffuseColor(Color.PINK);
+        redMaterial.setSpecularColor(Color.PINK);
+        grid.add(emptyCheck, 1, 1);
+        Cylinder cylinder = new Cylinder(20, 40);
+        cylinder.setMaterial(redMaterial);
+        grid.add(cylinder, 0, 2, 2, 2);
+        DraggableNode node = createDragableNode(grid);
+
+        node.setId("fJavadb" + countOfElements);
+        node.setType("dbConection");
+        File fjs = new File("./src/properties/fJavadb" + countOfElements + "" + FEXTENSION);
+
+        countOfElements++;
+        try {
+            boolean created = fjs.createNewFile();
+            if (created) {
+                log.info(FILE_CREATED_SUCCESFULLY);
+            }
+        } catch (IOException e) {
+
+            log.info(ERROR + e);
+        }
+        myFlow.getChildren().add(node);
+    }
+
+    private void createjsAlert() {
+        GridPane grid = createGridPane("AlertBox");
+        Label emptyCheck = new Label("Alert Box");
+        grid.add(emptyCheck, 1, 1);
+        DraggableNode node = createDragableNode(grid);
+
+        node.setId("fAlert" + countOfElements);
+        node.setType("jsAlert");
+        File fjs = new File("./src/properties/fAlert" + countOfElements + "" + FEXTENSION);
+
+        countOfElements++;
+        try {
+            fjs.createNewFile();
+        } catch (IOException e) {
+
+            log.info(ERROR + e);
+        }
+        myFlow.getChildren().add(node);
+    }
+
+    private void createjsCheck() {
+        GridPane grid = createGridPane("Check");
+        grid.setPrefHeight(240);
+        grid.setPrefWidth(120);
+
+        Label emptyCheck = new Label("Check ");
+        emptyCheck.setStyle("-fx-rotate : -45");
+        grid.add(emptyCheck, 1, 1);
+
+        DraggableNode node = createDragableNode(grid);
+
+        node.setId("fJs" + countOfElements);
+        node.setType("jsCheck");
+        File fjs = new File("./src/properties/fJs" + countOfElements + "" + FEXTENSION);
+
+        countOfElements++;
+        try {
+            fjs.createNewFile();
+        } catch (IOException e) {
+
+            log.info(ERROR + e);
+        }
+        node.setStyle("-fx-rotate : 45;");
+        myFlow.getChildren().add(node);
+    }
+
+    private void createHtmlPage() {
+        GridPane grid = createGridPane("htmlPage");
+
+        Label userNameLabel = new Label("User Name : ");
+        TextField userName = new TextField();
+
+        Label passwordLabel = new Label("Password : ");
+        PasswordField passwordField1 = new PasswordField();
+
+        grid.add(userNameLabel, 1, 0);
+        grid.add(userName, 2, 0);
+        grid.add(passwordLabel, 1, 1);
+        grid.add(passwordField1, 2, 1);
+        DraggableNode node = createDragableNode(grid);
+        node.setId("fHtml" + countOfElements);
+        node.setType("html");
+        countOfElements++;
+        myFlow.getChildren().add(node);
+    }
+
     private DraggableNode createDragableNode(GridPane grid) {
         DraggableNode node = new DraggableNode();
         node.setDgId(dgNodeCount);
-        // node.setPrefSize(300, 110);
-        // define the style via css
         node.getStyleClass().add("grid");
-        // position the node
-        // node.setLayoutX(spacing * (i + 1) + node.getPrefWidth() * i);
-        // node.setLayoutY(spacing);
         node.getChildren().add(grid);
 
-        // KeyValue initKeyValue = new KeyValue(node.translateXProperty(), node.getLayoutX());
-        // KeyFrame initFrame = new KeyFrame(Duration.ZERO, initKeyValue);
-        //
-        // KeyValue endKeyValue = new KeyValue(node.translateXProperty(), myFlow.getScene().getWidth() + 700);
-        // KeyFrame endFrame = new KeyFrame(Duration.seconds(0.2), endKeyValue);
-        //
-        // timeline = new Timeline(initFrame, endFrame);
-        //
-        // timeline.setCycleCount(0);
         dgNodeCount++;
         return node;
 
@@ -218,12 +262,12 @@ public class MainPageCtrl {
     void startDrag(MouseEvent event) {
         /* drag was detected, start a drag-and-drop gesture */
         /* allow any transfer mode */
-        Dragboard db = btnDrag.startDragAndDrop(TransferMode.ANY);
+        Dragboard btnDragboard = btnDrag.startDragAndDrop(TransferMode.ANY);
 
         /* Put a string on a dragboard */
         ClipboardContent content = new ClipboardContent();
         content.putString(btnDrag.getText());
-        db.setContent(content);
+        btnDragboard.setContent(content);
 
         event.consume();
 
@@ -233,12 +277,12 @@ public class MainPageCtrl {
     void startDragJs(MouseEvent event) {
         /* drag was detected, start a drag-and-drop gesture */
         /* allow any transfer mode */
-        Dragboard db = btnDragJs.startDragAndDrop(TransferMode.ANY);
+        Dragboard jsBtnDrag = btnDragJs.startDragAndDrop(TransferMode.ANY);
 
         /* Put a string on a dragboard */
         ClipboardContent content = new ClipboardContent();
         content.putString(btnDragJs.getText());
-        db.setContent(content);
+        jsBtnDrag.setContent(content);
 
         event.consume();
 
@@ -248,12 +292,12 @@ public class MainPageCtrl {
     void startDragDbcheck(MouseEvent event) {
         /* drag was detected, start a drag-and-drop gesture */
         /* allow any transfer mode */
-        Dragboard db = dbCheck.startDragAndDrop(TransferMode.ANY);
+        Dragboard dbBtnDrag = dbCheck.startDragAndDrop(TransferMode.ANY);
 
         /* Put a string on a dragboard */
         ClipboardContent content = new ClipboardContent();
         content.putString(dbCheck.getText());
-        db.setContent(content);
+        dbBtnDrag.setContent(content);
 
         event.consume();
 
@@ -263,22 +307,92 @@ public class MainPageCtrl {
     void startAlertDrag(MouseEvent e) {
         /* drag was detected, start a drag-and-drop gesture */
         /* allow any transfer mode */
-        Dragboard db = alertBox.startDragAndDrop(TransferMode.ANY);
+        Dragboard alertBtnDrag = alertBox.startDragAndDrop(TransferMode.ANY);
 
         /* Put a string on a dragboard */
         ClipboardContent content = new ClipboardContent();
         content.putString(alertBox.getText());
-        db.setContent(content);
+        alertBtnDrag.setContent(content);
 
         e.consume();
     }
 
     @FXML
-    void handleCreateButtonAction(ActionEvent e) {
+    void startDBDrag(MouseEvent e) {
+        /* drag was detected, start a drag-and-drop gesture */
+        /* allow any transfer mode */
+        Dragboard dgb = db.startDragAndDrop(TransferMode.ANY);
+
+        /* Put a string on a dragboard */
+        ClipboardContent content = new ClipboardContent();
+        content.putString(db.getText());
+        dgb.setContent(content);
+
+        e.consume();
+    }
+
+    @FXML
+    void saveFxml() {
+        BorderPane root = Context.getInstance().getMainPage();
+
+        Pane pane = (Pane) root.getChildren().get(0);
+        ObservableList<Node> childrens = pane.getChildren();
+        System.out.println("Yeee Haaw");
+        for (Node node : childrens) {
+            if (node instanceof DraggableNode && checkForInitNode(node)) {
+                crawlAndCreateFxml(node);
+                break;
+            }
+        }
+
+    }
+
+    private void crawlAndCreateFxml(Node node) {
+        try {
+            // root elements
+
+            DraggableNode root = (DraggableNode) node;
+            DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+            Document doc = docBuilder.newDocument();
+
+            Element rootElement = doc.createElement(root.getId());
+
+            Attr attr = doc.createAttribute("id");
+            attr.setValue("html");
+            rootElement.setAttributeNode(attr);
+
+            doc.appendChild(rootElement);
+            Element firstname = doc.createElement("firstname");
+            firstname.appendChild(doc.createTextNode("yong"));
+            rootElement.appendChild(firstname);
+            // write the content into xml file
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            DOMSource source = new DOMSource(doc);
+            StreamResult result = new StreamResult(new File("src/apps/Project.xml"));
+
+            // Output to console for testing
+            // StreamResult result = new StreamResult(System.out);
+
+            transformer.transform(source, result);
+
+            System.out.println("File saved!");
+        } catch (ParserConfigurationException | TransformerException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+    }
+
+    /**
+     * @param e
+     */
+    @FXML
+    void handleCreateButtonAction() {
         ObservableList<Node> childrens = myFlow.getChildren();
         // Convert the string to a
         // byte array.
-
         StringBuilder body = new StringBuilder();
         StringBuilder jstext = new StringBuilder();
         jstext.append("(function(){var subBtn=document.getElementById(\"btnSubmit\");subBtn.onclick=function(){");
@@ -310,12 +424,12 @@ public class MainPageCtrl {
             out.write(datab, 0, datab.length);
             out.write(datae, 0, datae.length);
         } catch (IOException x) {
-            System.err.println(x);
+            log.info(ERROR + x);
         }
         try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(jspath))) {
             out.write(datajs, 0, datajs.length);
         } catch (IOException x) {
-            System.err.println(x);
+            log.info(ERROR + x);
         }
 
     }
@@ -339,32 +453,46 @@ public class MainPageCtrl {
     }
 
     private void createCodeBasedOnNode(StringBuilder body, StringBuilder jstext, DraggableNode parent) {
-        if (parent.getId().equals("fHtml")) {
-            body.append("<form id=\"loginForm\" >");
-            body.append("<div class=\"container\">" + "<label><b>Username</b></label>"
-                    + " <input type=\"text\" placeholder=\"Enter Username\" id=\"uname\" name=\"username\" >" + " <label><b>Password</b></label>"
-                    + "  <input type=\"password\" placeholder=\"Enter Password\" id=\"psw\"  name=\"password\" >" + " </div>"
-                    + " <div class=\"container\" style=\"background-color:#f1f1f1\">" + " <button id=\"btnSubmit\" type=\"button\" >Login</button>"
-                    + "   <button type=\"button\" class=\"cancelbtn\">Cancel</button>" + " </div>" + "</form>");
-        } else if (parent.getId().equals("fJs")) {
-            jstext.append("var myCheck=true;");
-            Properties prop = returnProps(parent.getId());
-            String frst = prop.getProperty("firstBox");
-            String scnd = prop.getProperty("secondBox");
-            if (frst != null && "both".equals(frst)) {
-                jstext.append("var uname=document.getElementById(\"uname\").value;");
-                jstext.append("var psw=document.getElementById(\"psw\").value;");
-            }
-            if (scnd != null && "not empty".equals(scnd)) {
-                jstext.append("if(uname !=='' && psw !==''){myCheck=true;}else{myCheck=false}");
-            }
-        } else if (parent.getId().equals("fAlert")) {
+        if ("fHtml".equals(parent.getId().substring(0, parent.getId().length() - 1))) {
+            appendHtmltext(body);
+        } else if ("fJs".equals(parent.getId().substring(0, parent.getId().length() - 1))) {
+            appendJsText(jstext, parent);
+        } else if ("fAlert".equals(parent.getId().substring(0, parent.getId().length() - 1))) {
             Properties propAlert = returnProps(parent.getId());
             String message = propAlert.getProperty("message");
-            if (message != null) {
+            if (message != null && ifCond) {
                 jstext.append("if(!myCheck){alert(\" " + message + "\");}");
+                ifCond = false;
+            } else if (message != null) {
+                jstext.append("else{alert(\" " + message + "\");}");
+                ifCond = true;
             }
         }
+    }
+
+    private void appendJsText(StringBuilder jstext, DraggableNode parent) {
+        jstext.append("var myCheck=true;");
+        Properties prop = returnProps(parent.getId());
+        String frst = prop.getProperty("firstBox");
+        String scnd = prop.getProperty("secondBox");
+        if (frst != null && "both".equals(frst)) {
+            jstext.append("var uname=document.getElementById(\"uname\").value;");
+            jstext.append("var psw=document.getElementById(\"psw\").value;");
+        }
+        if (scnd != null && "not empty".equals(scnd)) {
+            jstext.append("if(uname !=='' && psw !==''){myCheck=true;}else{myCheck=false}");
+        }
+    }
+
+    private void appendHtmltext(StringBuilder body) {
+        body.append("<form id=\"loginForm\" >");
+        body.append("<div class=\"container \">" + "<label><b>Username</b></label>"
+                + " <input type=\"text\" placeholder=\"Enter Username\" id=\"uname\" name=\"username\" class=\"form-control\">"
+                + " <label><b>Password</b></label>"
+                + "  <input type=\"password\" placeholder=\"Enter Password\" id=\"psw\"  name=\"password\" class=\"form-control\" >"
+                + " <div class=\"col-lg-4\" style=\"padding : 10px 0px;\">"
+                + " <button id=\"btnSubmit\" type=\"button\" class=\"btn btn-success\">Login</button>"
+                + "   <button type=\"button\" class=\"btn btn-danger cancelbtn\">Cancel</button>" + " </div>" + " </div>" + "</form>");
     }
 
     private boolean checkForInitNode(Node parent) {
@@ -395,20 +523,16 @@ public class MainPageCtrl {
             Button btn = new Button("o/p");
             newGrid.add(btn, 3, 3);
             newGrid.add(editBtn, 3, 0);
-            btn.setOnAction(new EventHandler<ActionEvent>() {
-
-                @Override
-                public void handle(ActionEvent event) {
-                    Bounds n1InCommonAncestor = getRelativeBounds(btn, myFlow);
-                    Point2D n1Center = getCenter(n1InCommonAncestor);
-                    DraggableNode dg = (DraggableNode) btn.getParent().getParent();
-                    if (isStartLine()) {
-                        createLine(n1Center, null, dg);
-                        setStartLine(false);
-                    } else {
-                        createLine(null, n1Center, dg);
-                        setStartLine(true);
-                    }
+            btn.setOnAction((ActionEvent event) -> {
+                Bounds n1InCommonAncestor = getRelativeBounds(btn, myFlow);
+                Point2D n1Center = getCenter(n1InCommonAncestor);
+                DraggableNode dg = (DraggableNode) btn.getParent().getParent();
+                if (isStartLine()) {
+                    createLine(n1Center, null, dg);
+                    setStartLine(false);
+                } else {
+                    createLine(null, n1Center, dg);
+                    setStartLine(true);
                 }
             });
         } catch (
@@ -473,40 +597,36 @@ public class MainPageCtrl {
             Line sLine = it.next().getKey();
             if (sLine != null) {
                 Iterator<Entry<CustomLine, Boolean>> it1 = tlink.entrySet().iterator();
-                while (it1.hasNext()) {
-                    Line tLine = it1.next().getKey();
-                    if (tLine != null && sLine.getId().equals(tLine.getId())) {
-                        sameNodes = true;
-                        Alert al = new Alert(AlertType.ERROR, "Arey Mand Gadhwaa agodarach Line aahe na ", ButtonType.CANCEL);
-                        al.show();
-                        break;
-                    }
-
-                }
+                sameNodes = innerLoop(sameNodes, sLine, it1);
             }
         }
 
         return sameNodes;
     }
 
+    private boolean innerLoop(boolean sameNodes, Line sLine, Iterator<Entry<CustomLine, Boolean>> it1) {
+        boolean nodeCheck = sameNodes;
+        while (it1.hasNext()) {
+            Line tLine = it1.next().getKey();
+            if (tLine != null && sLine.getId().equals(tLine.getId())) {
+                nodeCheck = true;
+                Alert al = new Alert(AlertType.ERROR, "Arey Mand Gadhwaa agodarach Line aahe na ", ButtonType.CANCEL);
+                al.show();
+                break;
+            }
+
+        }
+        return nodeCheck;
+    }
+
     private Properties returnProps(String property) {
         Properties props = new Properties();
-        FileInputStream fs = null;
-        try {
-            String path = "./src/properties/" + property + ".properties";
-            fs = new FileInputStream(path);
+
+        String path = "./src/properties/" + property + ".properties";
+        try (FileInputStream fs = new FileInputStream(path)) {
             props.load(fs);
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (fs != null) {
-                    fs.close();
-                }
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            log.info(ERROR + e);
         }
         return props;
 

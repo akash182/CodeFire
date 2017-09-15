@@ -41,6 +41,7 @@ public class DraggableNode extends Pane {
     private boolean moveToFront = true;
     private boolean isSource;
     private Map<CustomLine, Boolean> connectedLines = new HashMap<>();
+    private String type;
 
     public DraggableNode() {
         init();
@@ -120,7 +121,7 @@ public class DraggableNode extends Pane {
 
                 rightPanel.getChildren().clear();
                 Label l = new Label();
-                if ("fJs".equals(getId())) {
+                if ("fJs".equals(getId().substring(0, getId().length() - 1))) {
 
                     ObservableList<String> options = FXCollections.observableArrayList("username", "pasword", "both");
                     ObservableList<String> options1 = FXCollections.observableArrayList("not empty", "empty");
@@ -131,7 +132,7 @@ public class DraggableNode extends Pane {
                     String frts = null;
                     String scnd = null;
                     try {
-                        fs = new FileInputStream("./src/properties/fJs.properties");
+                        fs = new FileInputStream("./src/properties/" + getId() + ".properties");
                         props.load(fs);
                         if (props.getProperty("firstBox") != null) {
                             frts = props.getProperty("firstBox");
@@ -159,7 +160,7 @@ public class DraggableNode extends Pane {
                             props.setProperty("firstBox", comboBox.getSelectionModel().getSelectedItem());
                             props.setProperty("secondBox", comparator.getSelectionModel().getSelectedItem());
                             try {
-                                props.store(new FileOutputStream("./src/properties/fjs.properties"), "Values for parameters");
+                                props.store(new FileOutputStream("./src/properties/" + getId() + ".properties"), "Values for parameters");
                             } catch (FileNotFoundException e) {
                                 // TODO Auto-generated catch block
                                 e.printStackTrace();
@@ -180,14 +181,14 @@ public class DraggableNode extends Pane {
                     }
                     rightPanel.getChildren().addAll(l, comboBox, l1, comparator, btnSave);
 
-                } else if ("fAlert".equals(getId())) {
+                } else if ("fAlert".equals(getId().substring(0, getId().length() - 1))) {
                     l.setText("Alert Box \n Your Message : ");
                     final TextField text = new TextField();
                     Properties props = new Properties();
                     FileInputStream fs = null;
                     String message = null;
                     try {
-                        fs = new FileInputStream("./src/properties/fAlert.properties");
+                        fs = new FileInputStream("./src/properties/" + getId() + ".properties");
                         props.load(fs);
                         if (props.getProperty("message") != null) {
                             message = props.getProperty("message");
@@ -212,7 +213,7 @@ public class DraggableNode extends Pane {
                         public void handle(ActionEvent event) {
                             props.setProperty("message", text.getText());
                             try {
-                                props.store(new FileOutputStream("./src/properties/fAlert.properties"), "Values for parameters");
+                                props.store(new FileOutputStream("./src/properties/" + getId() + ".properties"), "Values for parameters");
                             } catch (FileNotFoundException e) {
                                 // TODO Auto-generated catch block
                                 e.printStackTrace();
@@ -225,6 +226,62 @@ public class DraggableNode extends Pane {
                     });
 
                     rightPanel.getChildren().addAll(l, text, btnSave);
+                } else if ("fJavadb".equals(getId().substring(0, getId().length() - 1))) {
+                    l.setText("Host Url : ");
+                    final TextField hostUrl = new TextField();
+                    final TextField username = new TextField();
+                    final TextField password = new TextField();
+                    Label user = new Label("User Name : ");
+                    Label pwd = new Label("Password : ");
+                    Properties props = new Properties();
+                    FileInputStream fs = null;
+                    String host = null;
+                    String uname = null;
+                    String pswd = null;
+                    try {
+                        fs = new FileInputStream("./src/properties/" + getId() + ".properties");
+                        props.load(fs);
+                        if (props.getProperty("host") != null) {
+                            host = props.getProperty("host");
+                            uname = props.getProperty("user");
+                            pswd = props.getProperty("password");
+                            hostUrl.setText(host);
+                            username.setText(uname);
+                            password.setText(pswd);
+                        } else {
+                        }
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    } finally {
+                        try {
+                            fs.close();
+                        } catch (IOException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }
+                    Button btnSave = new Button("Save Properties");
+                    btnSave.addEventHandler(ActionEvent.ANY, new EventHandler<ActionEvent>() {
+
+                        @Override
+                        public void handle(ActionEvent event) {
+                            props.setProperty("host", hostUrl.getText());
+                            props.setProperty("user", username.getText());
+                            props.setProperty("password", password.getText());
+                            try {
+                                props.store(new FileOutputStream("./src/properties/" + getId() + ".properties"), "Values for parameters");
+                            } catch (FileNotFoundException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                        }
+
+                    });
+                    rightPanel.getChildren().addAll(l, hostUrl, user, username, pwd, password, btnSave);
                 }
 
                 dragging = false;
@@ -307,5 +364,13 @@ public class DraggableNode extends Pane {
 
     public void setDgId(int id) {
         this.id = id;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }
